@@ -120,6 +120,7 @@ clean_python:
 	-$(DEL) $(LIB_DIR)$S_pywrap*.$(SWIG_LIB_SUFFIX)
 	-$(DEL) $(OBJ_DIR)$Sswig$S*python_wrap.$O
 	-$(DELREC) $(PYPI_ARCHIVE_TEMP_DIR)
+	-$(DELREC) venv
 
 .PHONY: install_python_modules
 install_python_modules: dependencies/sources/protobuf-$(PROTOBUF_TAG)/python/google/protobuf/descriptor_pb2.py
@@ -701,6 +702,17 @@ endif
 .PHONY: install_python # Install Python OR-Tools on the host system
 install_python: pypi_archive
 	cd "$(PYPI_ARCHIVE_TEMP_DIR)$Sortools" && "$(PYTHON_EXECUTABLE)" setup.py install --user
+
+WHEEL_PKG = $(firstword $(wildcard $(PYPI_ARCHIVE_TEMP_DIR)/ortools/dist/ortools-*.whl))
+
+.PHONY: test_install_python
+test_install_python: pypi_archive
+	-$(DELREC) venv
+	"$(PYTHON_EXECUTABLE)" -m virtualenv -p "$(PYTHON_EXECUTABLE)" venv
+	$(COPY) test.py.in venv$Stest.py
+	venv/bin/python -m pip install "$(WHEEL_PKG)"
+	venv/bin/python -m pip show ortools
+	venv/bin/python "venv$Stest.py"
 
 .PHONY: uninstall_python # Uninstall Python OR-Tools from the host system
 uninstall_python:
